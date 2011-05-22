@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/34/trunk/cocoon-p2p/src/com/projectcocoon/p2p/util
+END
+FileUtil.as
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/34/trunk/cocoon-p2p/src/com/projectcocoon/p2p/util/FileUtil.as
+END
+ClassRegistry.as
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/27/trunk/cocoon-p2p/src/com/projectcocoon/p2p/util/ClassRegistry.as
+END
+SerializationUtil.as
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/34/trunk/cocoon-p2p/src/com/projectcocoon/p2p/util/SerializationUtil.as
+END
