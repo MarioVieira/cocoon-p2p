@@ -22,5 +22,10 @@ package com.projectcocoon.p2p.events
 			this.group = group;
 		}
 		
+		override public function clone():Event
+		{
+			return new ClientEvent(type, client, group);
+		}		
+		
 	}
 }

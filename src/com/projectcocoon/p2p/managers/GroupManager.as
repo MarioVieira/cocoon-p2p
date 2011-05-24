@@ -5,9 +5,14 @@ package com.projectcocoon.p2p.managers
 	import com.projectcocoon.p2p.command.CommandType;
 	import com.projectcocoon.p2p.events.ClientEvent;
 	import com.projectcocoon.p2p.events.GroupEvent;
+	import com.projectcocoon.p2p.events.MediaBroadcastEvent;
 	import com.projectcocoon.p2p.events.MessageEvent;
 	import com.projectcocoon.p2p.events.ObjectEvent;
+	import com.projectcocoon.p2p.interfaces.IGroupConnection;
+	import com.projectcocoon.p2p.util.Tracer;
 	import com.projectcocoon.p2p.vo.ClientVO;
+	import com.projectcocoon.p2p.vo.GroupInfoVO;
+	import com.projectcocoon.p2p.vo.MediaVO;
 	import com.projectcocoon.p2p.vo.MessageVO;
 	import com.projectcocoon.p2p.vo.ObjectMetadataVO;
 	
@@ -26,13 +31,14 @@ package com.projectcocoon.p2p.managers
 	[Event(name="dataReceived", type="com.projectcocoon.p2p.events.MessageEvent")]
 	[Event(name="objectAnnounced", type="com.projectcocoon.p2p.events.ObjectEvent")]
 	[Event(name="objectRequest", type="com.projectcocoon.p2p.events.ObjectEvent")]
-	public class GroupManager extends EventDispatcher
+	[Event(name="mediaBroadcast", type="com.projectcocoon.p2p.events.MediaBroadcastEvent")]
+	
+	public class GroupManager extends EventDispatcher implements IGroupConnection
 	{
 		
 		private var netConnection:NetConnection;
 		private var groups:Dictionary = new Dictionary();
 		private var multicastAddress:String;
-		
 		
 		public function GroupManager(netConnection:NetConnection, multicastAddress:String)
 		{
@@ -55,10 +61,15 @@ package com.projectcocoon.p2p.managers
 			var group:NetGroup = new NetGroup(netConnection, groupSpecString);
 			group.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler, false, 9999);
 			
-			var groupInfo:GroupInfo = new GroupInfo(groupSpecString);
+			var groupInfo:GroupInfoVO = new GroupInfoVO(groupSpecString);
 			groups[group] = groupInfo;
 			
 			return group;
+		}
+		
+		public function get groupNetConnection():NetConnection
+		{
+			return netConnection;
 		}
 		
 		public function leaveNetGroup(netGroup:NetGroup):void
@@ -73,6 +84,7 @@ package com.projectcocoon.p2p.managers
 		
 		public function sendMessageToAll(value:Object, netGroup:NetGroup, type:String = CommandType.MESSAGE, command:String = null):MessageVO
 		{
+			//Tracer.log(this, "sendMessageToAll - command: "+command+" value: "+value);
 			var client:ClientVO = getLocalClient(netGroup);
 			if (client)
 			{
@@ -107,7 +119,7 @@ package com.projectcocoon.p2p.managers
 		
 		public function getClient(netGroup:NetGroup, peerID:String):ClientVO
 		{
-			var groupInfo:GroupInfo = groups[netGroup];
+			var groupInfo:GroupInfoVO = groups[netGroup];
 			if (groupInfo)
 			{
 				return getClientByPeerID(groupInfo, peerID);
@@ -117,7 +129,7 @@ package com.projectcocoon.p2p.managers
 		
 		public function getClients(netGroup:NetGroup):Vector.<ClientVO>
 		{
-			var groupInfo:GroupInfo = groups[netGroup];
+			var groupInfo:GroupInfoVO = groups[netGroup];
 			if (groupInfo)
 			{
 				return groupInfo.clients;
@@ -125,10 +137,16 @@ package com.projectcocoon.p2p.managers
 			return new Vector.<ClientVO>();
 		}
 		
+		public function getGroupspecWithAuthorizations(netGroup:NetGroup):String
+		{
+			var groupInfo:GroupInfoVO = groups[netGroup];
+			return (groupInfo) ? groupInfo.groupSpec : null;
+		}
+		
 		
 		// ============= Private ============= //
 		
-		private function getClientByPeerID(groupInfo:GroupInfo, peerID:String):ClientVO
+		private function getClientByPeerID(groupInfo:GroupInfoVO, peerID:String):ClientVO
 		{
 			for each (var client:ClientVO in groupInfo.clients)
 			{
@@ -147,7 +165,7 @@ package com.projectcocoon.p2p.managers
 
 		private function addNeighbour(netGroup:NetGroup, peerID:String, isLocal:Boolean = false):void
 		{
-			var groupInfo:GroupInfo = groups[netGroup];
+			var groupInfo:GroupInfoVO = groups[netGroup];
 			if (groupInfo)
 			{
 				if (!getClientByPeerID(groupInfo, peerID))
@@ -164,7 +182,7 @@ package com.projectcocoon.p2p.managers
 		
 		private function removeNeighbour(netGroup:NetGroup, peerID:String):void
 		{
-			var groupInfo:GroupInfo = groups[netGroup];
+			var groupInfo:GroupInfoVO = groups[netGroup];
 			if (groupInfo)
 			{
 				var client:ClientVO = getClientByPeerID(groupInfo, peerID);
@@ -181,7 +199,6 @@ package com.projectcocoon.p2p.managers
 		
 		private function handleSendTo(event:NetStatusEvent):void
 		{
-			
 			var message:MessageVO = event.info.message as MessageVO;
 			
 			if (!message)
@@ -212,7 +229,9 @@ package com.projectcocoon.p2p.managers
 				return;
 			
 			var group:NetGroup = event.target as NetGroup; 
-			var groupInfo:GroupInfo = groups[group];
+			var groupInfo:GroupInfoVO = groups[group];
+			
+			//Tracer.log(this, "handlePosting - message.type: "+message.type+"  message.command: "+message.command);
 			
 			if (message.type == CommandType.SERVICE) 
 			{
@@ -236,8 +255,13 @@ package com.projectcocoon.p2p.managers
 				{
 					dispatchEvent(new ObjectEvent(ObjectEvent.OBJECT_REQUEST, message.data as ObjectMetadataVO));
 				}
+				else if (message.command == CommandList.MEDIA_BROADCAST)
+				{
+					//Tracer.log(this, "handlePosting - dispatchEvent(new MediaEvent: "+(message.data as MediaVO)+")");
+					dispatchEvent(new MediaBroadcastEvent(MediaBroadcastEvent.MEDIA_BROADCAST, message.data as MediaVO));
+				}
 			} 
-			else 
+			else if (message.type == CommandType.MESSAGE)
 			{
 				dispatchEvent(new MessageEvent(MessageEvent.DATA_RECEIVED, message, group));
 			}
@@ -305,25 +329,5 @@ package com.projectcocoon.p2p.managers
 				
 			}
 		}
-		
 	}
-}
-
-import com.projectcocoon.p2p.vo.ClientVO;
-
-import flash.net.NetConnection;
-
-class GroupInfo
-{
-	public var peerIds:Vector.<String>;
-	public var clients:Vector.<ClientVO>;
-	public var groupSpec:String;
-	
-	public function GroupInfo(groupSpec:String)
-	{
-		this.groupSpec = groupSpec;
-		peerIds = new Vector.<String>();
-		clients = new Vector.<ClientVO>();
-	}
-	
 }

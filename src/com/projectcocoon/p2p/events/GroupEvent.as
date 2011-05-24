@@ -1,7 +1,5 @@
 package com.projectcocoon.p2p.events
 {
-	import com.projectcocoon.p2p.vo.ClientVO;
-	
 	import flash.events.Event;
 	import flash.net.NetGroup;
 	

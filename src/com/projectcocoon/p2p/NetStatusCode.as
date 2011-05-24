@@ -29,5 +29,7 @@ package com.projectcocoon.p2p
 		public static const NETGROUP_REPLICATION_FETCH_SENDNOTIFY:String = "NetGroup.Replication.Fetch.SendNotify";
 		
 		
+		//NetStream for media broacasting
+		public static const NETSTREAM_START:String = "NetStream.Publish.Start";
 	}
 }

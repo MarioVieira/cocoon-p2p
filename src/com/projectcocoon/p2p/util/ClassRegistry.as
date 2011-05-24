@@ -2,6 +2,7 @@ package com.projectcocoon.p2p.util
 {
 	import com.projectcocoon.p2p.vo.AccelerationVO;
 	import com.projectcocoon.p2p.vo.ClientVO;
+	import com.projectcocoon.p2p.vo.MediaVO;
 	import com.projectcocoon.p2p.vo.MessageVO;
 	import com.projectcocoon.p2p.vo.ObjectMetadataVO;
 	
@@ -40,6 +41,13 @@ package com.projectcocoon.p2p.util
 			try
 			{
 				registerClassAlias("com.projectcocoon.p2p.vo.ObjectMetadataVO", ObjectMetadataVO);
+			}
+			catch (e:Error)
+			{
+			}
+			try 
+			{
+				registerClassAlias("com.projectcocoon.p2p.vo.MediaVO", MediaVO);
 			}
 			catch (e:Error)
 			{
