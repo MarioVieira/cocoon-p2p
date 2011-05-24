@@ -2,7 +2,13 @@ package com.projectcocoon.p2p.util
 {
 	import flash.utils.getQualifiedClassName;
 	import flash.utils.getTimer;
+	
+	import mx.controls.TextArea;
 	import mx.utils.ObjectUtil;
+	
+	import spark.components.TextArea;
+	
+	
 	
 	/**
 	 * ...
@@ -14,6 +20,9 @@ package com.projectcocoon.p2p.util
 	public class Tracer {
 		
 		private static var _useQName:Boolean = true;
+		
+		public static var loggerSparkTextArea	:spark.components.TextArea;
+		public static var loggerMXTextArea		:mx.controls.TextArea;
 		
 		public static function set useQualifiedClassName( b:Boolean):void
 		{
@@ -50,7 +59,16 @@ package com.projectcocoon.p2p.util
 			if( $msg != null ) s += " - " + $msg;	
 			
 			
+			logToTextAreas(s);
 			trace(s); 
+		}
+		
+		private static function logToTextAreas(text:String):void
+		{
+			if(loggerSparkTextArea)
+			{
+				loggerSparkTextArea.text += (loggerSparkTextArea.text != "") ? "\n"+text : text;
+			}
 		}
 	}
 }

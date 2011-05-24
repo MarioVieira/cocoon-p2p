@@ -9,6 +9,7 @@ package com.projectcocoon.p2p.managers
 	import com.projectcocoon.p2p.events.MessageEvent;
 	import com.projectcocoon.p2p.events.ObjectEvent;
 	import com.projectcocoon.p2p.interfaces.IGroupConnection;
+	import com.projectcocoon.p2p.util.GroupCreator;
 	import com.projectcocoon.p2p.util.Tracer;
 	import com.projectcocoon.p2p.vo.ClientVO;
 	import com.projectcocoon.p2p.vo.GroupInfoVO;
@@ -47,9 +48,34 @@ package com.projectcocoon.p2p.managers
 			this.multicastAddress = multicastAddress;
 		}
 		
+		/*** 
+		 * 
+		 * Each media publisher needs <code>multicastEnabled = true</code>in the GroupSpecifier
+		 * Not fully aware of the design of the GroupManager, simply asking a group with different settings 
+		 * 
+		 * Mario Vieira
+		 * 
+		 ***/  
+		public function createMediaBroadcastNetGroup(name:String):NetGroup
+		{
+			return GroupCreator.createMediaBroadcastNetGroup(name, multicastAddress, netConnection, netStatusHandler, groups);
+				
+			/*var groupSpec:GroupSpecifier = new GroupSpecifier(name);
+			
+			groupSpec.postingEnabled 		= true;
+			groupSpec.serverChannelEnabled 	= true;
+			groupSpec.multicastEnabled 		= true;
+			groupSpec.ipMulticastMemberUpdatesEnabled = true;
+			groupSpec.addIPMulticastAddress(multicastAddress);
+			
+			return observedGroup(groupSpec);*/
+		}
+
 		public function createNetGroup(name:String):NetGroup
 		{
-			var groupSpec:GroupSpecifier = new GroupSpecifier(name);
+			
+			return GroupCreator.createNetGroup(name, multicastAddress, netConnection, netStatusHandler, groups)
+			/*var groupSpec:GroupSpecifier = new GroupSpecifier(name);
 			groupSpec.postingEnabled = true;
 			groupSpec.routingEnabled = true;
 			groupSpec.ipMulticastMemberUpdatesEnabled = true;
@@ -57,13 +83,17 @@ package com.projectcocoon.p2p.managers
 			groupSpec.addIPMulticastAddress(multicastAddress);
 			groupSpec.serverChannelEnabled = true;
 			
+			return observedGroup(groupSpec);*/
+		}
+		
+		private function observedGroup(groupSpec:GroupSpecifier):NetGroup
+		{
 			var groupSpecString:String = groupSpec.groupspecWithAuthorizations();
 			var group:NetGroup = new NetGroup(netConnection, groupSpecString);
 			group.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler, false, 9999);
 			
 			var groupInfo:GroupInfoVO = new GroupInfoVO(groupSpecString);
 			groups[group] = groupInfo;
-			
 			return group;
 		}
 		

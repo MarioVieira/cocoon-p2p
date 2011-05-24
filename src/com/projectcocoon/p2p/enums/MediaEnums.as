@@ -1,5 +1,7 @@
 package com.projectcocoon.p2p.enums
 {
+	import flash.net.NetConnection;
+
 	public class MediaEnums
 	{
 		public static const CAM				:String = "cam";
@@ -8,5 +10,6 @@ package com.projectcocoon.p2p.enums
 		public static const LIVE			:String = "live";
 		public static const MEDIA_PUBLISHED	:String = "mediaPublished";
 		public static const MESSAGE_DIVIDER	:String = "_";
+		public static const MEDIA_GROUP 	:String = ".media";
 	}
 }

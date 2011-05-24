@@ -11,9 +11,8 @@ package com.projectcocoon.p2p.managers
 	import com.projectcocoon.p2p.vo.MediaVO;
 	
 	import flash.events.NetStatusEvent;
-	import flash.media.Camera;
-	import flash.media.Microphone;
 	import flash.media.SoundTransform;
+	import flash.net.GroupSpecifier;
 	import flash.net.NetStream;
 	
 	/**
@@ -29,7 +28,7 @@ package com.projectcocoon.p2p.managers
 		private var _mediaInfo			:	MediaVO;
 		private var _camAndMic			:	BroadcasterVo;
 		private var _sendStream 		:	NetStream;
-		
+		private var _mediaGroupSpec		:	GroupSpecifier;
 		
 		public function MediaManager(groupConnection:IGroupConnection, mediaMessenger:IMediaMessenger, localClientInfo:ILocalNetworkInfo)
 		{
@@ -62,12 +61,12 @@ package com.projectcocoon.p2p.managers
 		
 		private function publishMedia(type:String):void
 		{
-			setupNetStream();
 			_mediaInfo.broadcasting	   					   = true;
 			_mediaInfo.mediaType 	   					   = type;
 			_mediaInfo.publisherFarID  					   = _localClientInfo.localClient.peerID;
 			_mediaInfo.publisherGroupspecWithAuthorization = _localClientInfo.localClientGroupspecWithAuthorization;
 			
+			setupNetStream();
 			//Tracer.log(this,"publishMedia - _localClientInfo: "+ _localClientInfo +" type: "+type+"  stream name: "+GetMediaInfo.getStreamName(_mediaInfo)+"  _groupConnection: "+_groupConnection+" _mediaInfo.publisherGroupspecWithAuthorization : "+_mediaInfo.publisherGroupspecWithAuthorization);
 			
 			
@@ -85,6 +84,7 @@ package com.projectcocoon.p2p.managers
 		{
 			if(!_sendStream) 
 			{
+				Tracer.log(this, "-----------------------------------------------------------------------------");
 				Tracer.log(this, "setupNetStream - gSpec: "+_localClientInfo.localClientGroupspecWithAuthorization);
 				_sendStream = new NetStream(_groupConnection.groupNetConnection, _localClientInfo.localClientGroupspecWithAuthorization);
 				_sendStream.addEventListener(NetStatusEvent.NET_STATUS, onNetStatus);
@@ -118,7 +118,7 @@ package com.projectcocoon.p2p.managers
 			}
 			else if(_mediaInfo.mediaType == MediaEnums.CAM_AND_MIC)
 			{
-				//Tracer.log(this, "attachAudioAndVideo - attach mic and cam");
+				Tracer.log(this, "attachAudioAndVideo - attach mic and cam");
 				_sendStream.attachAudio(_camAndMic.microphone);
 				_sendStream.attachCamera(_camAndMic.camera);
 			}
@@ -152,5 +152,17 @@ package com.projectcocoon.p2p.managers
 					break;
 			}
 		}
+		
+		/*protected function getMediaPublisherNetGroup():GroupSpecifier
+		{
+			if(!_mediaGroupSpec)  
+			{
+				_mediaGroupSpec = new GroupSpecifier(_groupConnection.groupName + MediaEnums.MEDIA_GROUP);
+				_mediaGroupSpec.serverChannelEnabled = true;
+				_mediaGroupSpec.multicastEnabled = true;
+			}
+			
+			return _mediaGroupSpec;
+		}*/
 	}
 }

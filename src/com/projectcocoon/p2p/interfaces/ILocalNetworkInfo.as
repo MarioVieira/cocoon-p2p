@@ -9,5 +9,6 @@ package com.projectcocoon.p2p.interfaces
 	{
 		function get localClient()							:ClientVO;
 		function get localClientGroupspecWithAuthorization():String;
+		function get groupName()							:String;
 	}
 }
