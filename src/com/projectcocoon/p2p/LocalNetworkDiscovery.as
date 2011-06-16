@@ -24,7 +24,7 @@
 */
 package com.projectcocoon.p2p
 {
-	
+	 
 	import com.projectcocoon.p2p.command.CommandList;
 	import com.projectcocoon.p2p.command.CommandType;
 	import com.projectcocoon.p2p.events.AccelerationEvent;
@@ -32,6 +32,7 @@ package com.projectcocoon.p2p
 	import com.projectcocoon.p2p.events.GroupEvent;
 	import com.projectcocoon.p2p.events.MediaBroadcastEvent;
 	import com.projectcocoon.p2p.events.MessageEvent;
+	import com.projectcocoon.p2p.events.NetworkEvent;
 	import com.projectcocoon.p2p.events.ObjectEvent;
 	import com.projectcocoon.p2p.interfaces.IGroupConnection;
 	import com.projectcocoon.p2p.interfaces.ILocalNetworkInfo;
@@ -54,13 +55,9 @@ package com.projectcocoon.p2p
 	import flash.events.NetStatusEvent;
 	import flash.media.Camera;
 	import flash.media.Microphone;
-	import flash.net.GroupSpecifier;
 	import flash.net.NetConnection;
 	import flash.net.NetGroup;
 	import flash.sensors.Accelerometer;
-	
-	import mx.collections.ArrayCollection;
-	import mx.core.IMXMLObject;
 
 	
 	[Event(name="groupConnected", type="com.projectcocoon.p2p.events.GroupEvent")]
@@ -75,8 +72,10 @@ package com.projectcocoon.p2p
 	[Event(name="objectProgress", type="com.projectcocoon.p2p.events.ObjectEvent")]
 	[Event(name="objectComplete", type="com.projectcocoon.p2p.events.ObjectEvent")]
 	[Event(name="mediaBroadcast", type="com.projectcocoon.p2p.events.MediaBroadcastEvent")]
+	[Event(name="networkChange", type="com.projectcocoon.p2p.events.NetworkEvent")]
 	
-	public class LocalNetworkDiscovery extends EventDispatcher implements ILocalNetworkInfo, IMediaMessenger, IMXMLObject
+	
+	public class LocalNetworkDiscovery extends EventDispatcher implements ILocalNetworkInfo, IMediaMessenger
 	{
 		/**
 		 * URL for LAN connectivity
@@ -91,19 +90,19 @@ package com.projectcocoon.p2p
 	
 		private var _clientName:String;
 		private var _groupName:String = "com.projectcocoon.p2p.default";
-		private var _autoConnect:Boolean = true;
+		private var _autoConnect:Boolean = false;
 		private var _nc:NetConnection;
 		private var _group:NetGroup;
 		private var _groupManager:GroupManager;
 		private var _objectManager:ObjectManager;
 		private var _localClient:ClientVO;
-		private var _clients:ArrayCollection = new ArrayCollection();
-		private var _sharedObjects:ArrayCollection;
-		private var _receivedObjects:ArrayCollection;
+		private var _clients:Array = [];
+		private var _sharedObjects:Array;
+		private var _receivedObjects:Array;
 		private var _url:String = RTMFP_LOCAL;
 		private var _key:String;
 		private var _useCirrus:Boolean;
-		private var _multicastAddress:String = "225.225.0.1:30303";
+		private var _multicastAddress:String = "225.225.0.0:30303";
 		private var _receiveLocal:Boolean;
 		private var _acc:Accelerometer;
 		private var _accelerometerInterval:uint = 0;
@@ -134,11 +133,13 @@ package com.projectcocoon.p2p
 				connect();
 		}
 		
+		
 		/**
 		 * Connects to the p2p network 
 		 */		
 		public function connect():void
 		{
+			//Tracer.log(this, "connect");
 			close();
 			_nc = new NetConnection();
 			_nc.addEventListener(NetStatusEvent.NET_STATUS, onNetStatus);
@@ -170,10 +171,16 @@ package com.projectcocoon.p2p
 			return _groupManager.getGroupspecWithAuthorizations(_group); 	
 		}
 		
-		public function startBrodcast():void
+		public function startBrodcast(order:String = null):void
 		{
 			//Tracer.log(this, "startBrodcast");
-			_mediaManager.startMedia(new BroadcasterVo(_microphone, _camera));
+			_mediaManager.startMedia(new BroadcasterVo(_microphone, _camera), order);
+		}
+		
+		public function stopMedia():void
+		{
+			//Tracer.log(this, "startBrodcast");
+			_mediaManager.stopMedia();
 		}
 		
 		public function stopBroadcast():void
@@ -217,7 +224,7 @@ package com.projectcocoon.p2p
 		{
 			var msg:MessageVO = _groupManager.sendMessageToAll(value, _group, CommandType.SERVICE, CommandList.MEDIA_BROADCAST);
 			if(loopback) 
-				dispatchEvent(new MediaBroadcastEvent(MediaBroadcastEvent.MEDIA_BROADCAST, msg.data as MediaVO));
+				dispatchEvent(new MediaBroadcastEvent(MediaBroadcastEvent.MEDIA_BROADCAST, msg.data as MediaVO, _localClient));
 		}
 		
 		/**
@@ -253,9 +260,11 @@ package com.projectcocoon.p2p
 		{
 			var msg:MessageVO = getObjectManager().request(metadata);
 			if (msg)
-				receivedObjects.addItem(msg.data);
+				receivedObjects.push(msg.data);
 		}
 		
+		
+		 
 		// ========================== //
 		
 		/**
@@ -270,37 +279,37 @@ package com.projectcocoon.p2p
 		}
 		
 		/**
-		 * ArrayCollection filled with ClientVO objects representing all clients
-		 */
+		 * Array filled with ClientVO objects representing all clients
+		 */ 
 		[Bindable(event="clientsChange")]
-		public function get clients():ArrayCollection
+		public function get clients():Array
 		{
 			return _clients;
 		}
 		
 		/**
-		 * ArrayCollection filled with ObjectMetadataVO objects representing all objects shared by the local client
+		 * Array filled with ObjectMetadataVO objects representing all objects shared by the local client
 		 */		
 		[Bindable(event="sharedObjectsChange")]
-		public function get sharedObjects():ArrayCollection
+		public function get sharedObjects():Array
 		{
 			if (!_sharedObjects)
 			{
-				_sharedObjects = new ArrayCollection();
+				_sharedObjects = [];
 				dispatchEvent(new Event("sharedObjectsChange"));
 			}
 			return _sharedObjects;
 		}
 		
 		/**
-		 * ArrayCollection filled with ObjectMetadataVO objects representing all objects received by this client
+		 * Array filled with ObjectMetadataVO objects representing all objects received by this client
 		 */		
 		[Bindable(event="receivedObjectsChange")]
-		public function get receivedObjects():ArrayCollection
+		public function get receivedObjects():Array
 		{
 			if (!_receivedObjects)
 			{
-				_receivedObjects = new ArrayCollection();
+				_receivedObjects = [];
 				dispatchEvent(new Event("receivedObjectsChange"));
 			}
 			return _receivedObjects;
@@ -509,19 +518,17 @@ package com.projectcocoon.p2p
 				_localClient = null;
 			
 			if (_clients)
-				_clients.removeAll();
+				_clients = [];
 			else
-				_clients = new ArrayCollection();
+				_clients = [];
 			dispatchEvent(new Event("clientsChange"));		
 		}
 		
 		
 		private function setupGroup():void
 		{
-			
 			// create and setup the GroupManager
 			_groupManager = new GroupManager(_nc, multicastAddress);
-			
 			_groupManager.addEventListener(GroupEvent.GROUP_CONNECTED, onGroupConnected);
 			_groupManager.addEventListener(GroupEvent.GROUP_CLOSED, onGroupClosed);
 			_groupManager.addEventListener(ClientEvent.CLIENT_ADDED, onClientAdded);
@@ -570,21 +577,31 @@ package com.projectcocoon.p2p
 		private function share(value:Object, groupID:String, metadata:Object):void
 		{
 			var msg:MessageVO = getObjectManager().share(value, groupID, metadata);
-			sharedObjects.addItem(msg.data); // add the ObjectMetadataVO to the list of shared Objects
+			sharedObjects.push(msg.data); // add the ObjectMetadataVO to the list of shared Objects
 		}
 		
 		// ============= Event Handlers ============= //
 		
 		private function onNetStatus(evt:NetStatusEvent):void
 		{
+			//Tracer.log(this, "onNetStatus - evt.info.code: "+evt.info.code );
 			switch (evt.info.code) 
 			{
 				case NetStatusCode.NETCONNECTION_CONNECT_SUCCESS:
-					//Tracer.log(this, "NetConnection OK");
 					setupGroup();
 					setupMediaManager();
 					break;
+				
+				
+				case NetStatusCode.NETCONNECTION_CHANGE:
+					broadcastNetworkChange(NetStatusCode.NETCONNECTION_CHANGE);
+					break;
 			}
+		}
+		
+		private function broadcastNetworkChange(info:String):void
+		{
+			dispatchEvent( new NetworkEvent(NetworkEvent.NETWORK_CHANGE, info) );
 		}
 		
 		private function onGroupConnected(event:GroupEvent):void
@@ -610,11 +627,11 @@ package com.projectcocoon.p2p
 		{
 			if (event.group == _group)
 			{
-				_clients.addItem(event.client);
+				_clients.push(event.client);
 				dispatchEvent(new Event("clientsConnectedChange"));
 				announceName();
 			}
-			// distribute the event
+			// distribute the event  
 			dispatchEvent(event.clone());
 		}
 		
@@ -622,11 +639,19 @@ package com.projectcocoon.p2p
 		{
 			if (event.group == _group)
 			{
-				_clients.removeItemAt(_clients.getItemIndex(event.client));
+				removeClient(event.client);
 				dispatchEvent(new Event("clientsConnectedChange"));
 			}
 			// distribute the event
 			dispatchEvent(event.clone());
+		}
+		
+		private function removeClient(client:ClientVO):void
+		{
+			for(var i:int; i < _clients.length; i++)
+			{
+				if(_clients[i].peerID == client.peerID) _clients.splice(i, 1);
+			}
 		}
 		
 		private function onClientUpdate(event:ClientEvent):void
@@ -663,7 +688,7 @@ package com.projectcocoon.p2p
 		
 		private function onObjectComplete(event:ObjectEvent):void
 		{
-			// distribute the event
+			// distribute the event  
 			dispatchEvent(event.clone());
 		}
 		

@@ -31,5 +31,8 @@ package com.projectcocoon.p2p
 		
 		//NetStream for media broacasting
 		public static const NETSTREAM_START:String = "NetStream.Publish.Start";
+		public static const NETCONNECTION_CHANGE:String = "NetConnection.Connect.NetworkChange";
+		
+		
 	}
 }

@@ -1,6 +1,39 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
-  <includeClasses/>
+<flexLibProperties includeAllClasses="false" useMultiPlatformConfig="false" version="3">
+  <includeClasses>
+    <classEntry path="com.projectcocoon.p2p.LocalNetworkDiscovery"/>
+    <classEntry path="com.projectcocoon.p2p.NetStatusCode"/>
+    <classEntry path="com.projectcocoon.p2p.command.CommandList"/>
+    <classEntry path="com.projectcocoon.p2p.command.CommandType"/>
+    <classEntry path="com.projectcocoon.p2p.enums.MediaEnums"/>
+    <classEntry path="com.projectcocoon.p2p.events.AccelerationEvent"/>
+    <classEntry path="com.projectcocoon.p2p.events.ClientEvent"/>
+    <classEntry path="com.projectcocoon.p2p.events.GroupEvent"/>
+    <classEntry path="com.projectcocoon.p2p.events.MediaBroadcastEvent"/>
+    <classEntry path="com.projectcocoon.p2p.events.MessageEvent"/>
+    <classEntry path="com.projectcocoon.p2p.events.NetworkEvent"/>
+    <classEntry path="com.projectcocoon.p2p.events.ObjectEvent"/>
+    <classEntry path="com.projectcocoon.p2p.interfaces.IGroupConnection"/>
+    <classEntry path="com.projectcocoon.p2p.interfaces.ILocalNetworkInfo"/>
+    <classEntry path="com.projectcocoon.p2p.interfaces.IMediaMessenger"/>
+    <classEntry path="com.projectcocoon.p2p.managers.GroupManager"/>
+    <classEntry path="com.projectcocoon.p2p.managers.MediaManager"/>
+    <classEntry path="com.projectcocoon.p2p.managers.ObjectManager"/>
+    <classEntry path="com.projectcocoon.p2p.util.ClassRegistry"/>
+    <classEntry path="com.projectcocoon.p2p.util.FileUtil"/>
+    <classEntry path="com.projectcocoon.p2p.util.GetMediaInfo"/>
+    <classEntry path="com.projectcocoon.p2p.util.GroupCreator"/>
+    <classEntry path="com.projectcocoon.p2p.util.PostOfficer"/>
+    <classEntry path="com.projectcocoon.p2p.util.SerializationUtil"/>
+    <classEntry path="com.projectcocoon.p2p.util.Tracer"/>
+    <classEntry path="com.projectcocoon.p2p.vo.AccelerationVO"/>
+    <classEntry path="com.projectcocoon.p2p.vo.BroadcasterVo"/>
+    <classEntry path="com.projectcocoon.p2p.vo.ClientVO"/>
+    <classEntry path="com.projectcocoon.p2p.vo.GroupInfoVO"/>
+    <classEntry path="com.projectcocoon.p2p.vo.MediaVO"/>
+    <classEntry path="com.projectcocoon.p2p.vo.MessageVO"/>
+    <classEntry path="com.projectcocoon.p2p.vo.ObjectMetadataVO"/>
+  </includeClasses>
   <includeResources/>
   <namespaceManifests/>
 </flexLibProperties>

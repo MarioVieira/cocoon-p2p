@@ -53,5 +53,10 @@ package com.projectcocoon.p2p.util
 			{
 			}
 		}
+		
+		public static function registerClass(packageAndClass:String, clazz:*):void
+		{
+			registerClassAlias(packageAndClass, clazz);
+		}
 	}
 }

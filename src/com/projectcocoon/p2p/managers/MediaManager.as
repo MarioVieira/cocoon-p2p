@@ -6,6 +6,7 @@ package com.projectcocoon.p2p.managers
 	import com.projectcocoon.p2p.interfaces.ILocalNetworkInfo;
 	import com.projectcocoon.p2p.interfaces.IMediaMessenger;
 	import com.projectcocoon.p2p.util.GetMediaInfo;
+	import com.projectcocoon.p2p.util.GroupCreator;
 	import com.projectcocoon.p2p.util.Tracer;
 	import com.projectcocoon.p2p.vo.BroadcasterVo;
 	import com.projectcocoon.p2p.vo.MediaVO;
@@ -38,14 +39,15 @@ package com.projectcocoon.p2p.managers
 			_mediaInfo		 = new MediaVO();
 		}
 		
-		public function startMedia(broadcasterInfo:BroadcasterVo):void
+		public function startMedia(broadcasterInfo:BroadcasterVo, order:String):void
 		{	
 			var type:String = GetMediaInfo.getMediaType(broadcasterInfo); 
 			//Tracer.log(this,"udpated 8.6 - startMedia() - type: "+type+"  broadcasting: "+_mediaInfo.broadcasting);
 			if(type && !_mediaInfo.broadcasting)
 			{ 
+				if(_sendStream) stopMedia();
 				_camAndMic = broadcasterInfo;
-				publishMedia(type);
+				publishMedia(type, order);
 			}
 		}
 		
@@ -53,18 +55,27 @@ package com.projectcocoon.p2p.managers
 		{
 			_mediaInfo.mediaType	= null;
 			_mediaInfo.broadcasting = false;
-			_camAndMic.camera 		= null;
-			_camAndMic.microphone 	= null;
 			
-			_sendStream.close();
+			if(_camAndMic)
+			{
+				_camAndMic.camera 		= null;
+				_camAndMic.microphone 	= null;
+			}
+			
+			if(_sendStream)
+			{
+				_sendStream.close();
+				_sendStream.removeEventListener(NetStatusEvent.NET_STATUS, onNetStatus);
+			}
 		}
 		
-		private function publishMedia(type:String):void
+		private function publishMedia(type:String, order:String):void
 		{
+			_mediaInfo.order							   = order;
 			_mediaInfo.broadcasting	   					   = true;
 			_mediaInfo.mediaType 	   					   = type;
 			_mediaInfo.publisherFarID  					   = _localClientInfo.localClient.peerID;
-			_mediaInfo.publisherGroupspecWithAuthorization = _localClientInfo.localClientGroupspecWithAuthorization;
+			_mediaInfo.publisherGroupspecWithAuthorization = getMediaGroupSpec().groupspecWithoutAuthorizations(); //_localClientInfo.localClientGroupspecWithAuthorization;
 			
 			setupNetStream();
 			//Tracer.log(this,"publishMedia - _localClientInfo: "+ _localClientInfo +" type: "+type+"  stream name: "+GetMediaInfo.getStreamName(_mediaInfo)+"  _groupConnection: "+_groupConnection+" _mediaInfo.publisherGroupspecWithAuthorization : "+_mediaInfo.publisherGroupspecWithAuthorization);
@@ -82,13 +93,11 @@ package com.projectcocoon.p2p.managers
 		
 		private function setupNetStream():void
 		{
-			if(!_sendStream) 
-			{
-				Tracer.log(this, "-----------------------------------------------------------------------------");
-				Tracer.log(this, "setupNetStream - gSpec: "+_localClientInfo.localClientGroupspecWithAuthorization);
-				_sendStream = new NetStream(_groupConnection.groupNetConnection, _localClientInfo.localClientGroupspecWithAuthorization);
-				_sendStream.addEventListener(NetStatusEvent.NET_STATUS, onNetStatus);
-			}
+			Tracer.log(this, "-----------------------------------------------------------------------------");
+			Tracer.log(this, "setupNetStream - gSpec: "+_localClientInfo.localClientGroupspecWithAuthorization);
+			
+			_sendStream = new NetStream(_groupConnection.groupNetConnection, _mediaInfo.publisherGroupspecWithAuthorization);
+			_sendStream.addEventListener(NetStatusEvent.NET_STATUS, onNetStatus);
 		}
 		
 		private function setNetStreamClient():void
@@ -113,12 +122,12 @@ package com.projectcocoon.p2p.managers
 		{
 			if(_mediaInfo.mediaType == MediaEnums.MIC)
 			{
-				//Tracer.log(this, "attachAudioAndVideo - attach mic");
+				Tracer.log(this, "attachAudioAndVideo - attach mic");
 				_sendStream.attachAudio(_camAndMic.microphone);
 			}
 			else if(_mediaInfo.mediaType == MediaEnums.CAM_AND_MIC)
 			{
-				Tracer.log(this, "attachAudioAndVideo - attach mic and cam");
+				//Tracer.log(this, "attachAudioAndVideo - attach mic and cam");
 				_sendStream.attachAudio(_camAndMic.microphone);
 				_sendStream.attachCamera(_camAndMic.camera);
 			}
@@ -153,16 +162,14 @@ package com.projectcocoon.p2p.managers
 			}
 		}
 		
-		/*protected function getMediaPublisherNetGroup():GroupSpecifier
+		protected function getMediaGroupSpec():GroupSpecifier
 		{
 			if(!_mediaGroupSpec)  
 			{
-				_mediaGroupSpec = new GroupSpecifier(_groupConnection.groupName + MediaEnums.MEDIA_GROUP);
-				_mediaGroupSpec.serverChannelEnabled = true;
-				_mediaGroupSpec.multicastEnabled = true;
+				_mediaGroupSpec = _groupConnection.createMediaBroadcastNetGroup(_localClientInfo.groupName);
 			}
 			
 			return _mediaGroupSpec;
-		}*/
+		}
 	}
 }

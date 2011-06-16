@@ -50,51 +50,24 @@ package com.projectcocoon.p2p.managers
 		
 		/*** 
 		 * 
-		 * Each media publisher needs <code>multicastEnabled = true</code>in the GroupSpecifier
-		 * Not fully aware of the design of the GroupManager, simply asking a group with different settings 
+		 * Each media publisher needs <code>serverChannelEnabled = true</code>in the GroupSpecifier, 
+		 * 	which avoids flushing data from the network when disconnected
+		 * Not fully aware of the design of the GroupManager, simply asking a group with different settings (testing, v 0.8.1) 
 		 * 
 		 * Mario Vieira
 		 * 
 		 ***/  
-		public function createMediaBroadcastNetGroup(name:String):NetGroup
+		public function createMediaBroadcastNetGroup(name:String):GroupSpecifier
 		{
-			return GroupCreator.createMediaBroadcastNetGroup(name, multicastAddress, netConnection, netStatusHandler, groups);
-				
-			/*var groupSpec:GroupSpecifier = new GroupSpecifier(name);
+			var groupSpec:GroupSpecifier = GroupCreator.getMediaGroupSpecifier(name, multicastAddress);
+			GroupCreator.getObservedGroup(groupSpec, netConnection, netStatusHandler, groups);
 			
-			groupSpec.postingEnabled 		= true;
-			groupSpec.serverChannelEnabled 	= true;
-			groupSpec.multicastEnabled 		= true;
-			groupSpec.ipMulticastMemberUpdatesEnabled = true;
-			groupSpec.addIPMulticastAddress(multicastAddress);
-			
-			return observedGroup(groupSpec);*/
+			return groupSpec;
 		}
 
 		public function createNetGroup(name:String):NetGroup
 		{
-			
-			return GroupCreator.createNetGroup(name, multicastAddress, netConnection, netStatusHandler, groups)
-			/*var groupSpec:GroupSpecifier = new GroupSpecifier(name);
-			groupSpec.postingEnabled = true;
-			groupSpec.routingEnabled = true;
-			groupSpec.ipMulticastMemberUpdatesEnabled = true;
-			groupSpec.objectReplicationEnabled = true;
-			groupSpec.addIPMulticastAddress(multicastAddress);
-			groupSpec.serverChannelEnabled = true;
-			
-			return observedGroup(groupSpec);*/
-		}
-		
-		private function observedGroup(groupSpec:GroupSpecifier):NetGroup
-		{
-			var groupSpecString:String = groupSpec.groupspecWithAuthorizations();
-			var group:NetGroup = new NetGroup(netConnection, groupSpecString);
-			group.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler, false, 9999);
-			
-			var groupInfo:GroupInfoVO = new GroupInfoVO(groupSpecString);
-			groups[group] = groupInfo;
-			return group;
+			return GroupCreator.getObservedGroup( GroupCreator.getDefaultGroupSpecifier(name, multicastAddress), netConnection, netStatusHandler, groups );
 		}
 		
 		public function get groupNetConnection():NetConnection
@@ -288,7 +261,7 @@ package com.projectcocoon.p2p.managers
 				else if (message.command == CommandList.MEDIA_BROADCAST)
 				{
 					//Tracer.log(this, "handlePosting - dispatchEvent(new MediaEvent: "+(message.data as MediaVO)+")");
-					dispatchEvent(new MediaBroadcastEvent(MediaBroadcastEvent.MEDIA_BROADCAST, message.data as MediaVO));
+					dispatchEvent(new MediaBroadcastEvent(MediaBroadcastEvent.MEDIA_BROADCAST, message.data as MediaVO, message.client));
 				}
 			} 
 			else if (message.type == CommandType.MESSAGE)
@@ -330,6 +303,7 @@ package com.projectcocoon.p2p.managers
 		
 		private function netStatusHandler(event:NetStatusEvent):void
 		{
+			//Tracer.log(this, "onNetStatus - evt.info.code: "+event.info.code );
 			switch (event.info.code) 
 			{
 				case NetStatusCode.NETGROUP_CONNECT_SUCCESS:

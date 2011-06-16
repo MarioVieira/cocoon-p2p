@@ -9,5 +9,6 @@ package com.projectcocoon.p2p.vo
 		public var publisherStream 					   : String;
 		public var mediaType	   					   : String;
 		public var broadcasting						   : Boolean;
+		public var order							   : String;
 	}
 }
