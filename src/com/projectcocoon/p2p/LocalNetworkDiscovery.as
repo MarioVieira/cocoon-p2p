@@ -41,7 +41,6 @@ package com.projectcocoon.p2p
 	import com.projectcocoon.p2p.managers.MediaManager;
 	import com.projectcocoon.p2p.managers.ObjectManager;
 	import com.projectcocoon.p2p.util.ClassRegistry;
-	import com.projectcocoon.p2p.util.Tracer;
 	import com.projectcocoon.p2p.vo.AccelerationVO;
 	import com.projectcocoon.p2p.vo.BroadcasterVo;
 	import com.projectcocoon.p2p.vo.ClientVO;
@@ -58,6 +57,10 @@ package com.projectcocoon.p2p
 	import flash.net.NetConnection;
 	import flash.net.NetGroup;
 	import flash.sensors.Accelerometer;
+	
+	import mx.collections.ArrayCollection;
+	
+	import org.osflash.signals.Signal;
 
 	
 	[Event(name="groupConnected", type="com.projectcocoon.p2p.events.GroupEvent")]
@@ -89,14 +92,14 @@ package com.projectcocoon.p2p
 		private static const RTMFP_CIRRUS:String = "rtmfp://p2p.rtmfp.net";
 	
 		private var _clientName:String;
-		private var _groupName:String = "com.projectcocoon.p2p.default";
+		private var _groupName:String = "uk.co.baremedia.p2p";
 		private var _autoConnect:Boolean = false;
 		private var _nc:NetConnection;
 		private var _group:NetGroup;
 		private var _groupManager:GroupManager;
 		private var _objectManager:ObjectManager;
 		private var _localClient:ClientVO;
-		private var _clients:Array = [];
+		private var _clients:ArrayCollection;
 		private var _sharedObjects:Array;
 		private var _receivedObjects:Array;
 		private var _url:String = RTMFP_LOCAL;
@@ -117,12 +120,28 @@ package com.projectcocoon.p2p
 			registerClasses();
 		}
 		
+		public function get mediaInfo():MediaVO
+		{
+			return _mediaManager.mediaInfo;
+		}
+		
+		public function get camAndMic():BroadcasterVo
+		{
+			return _mediaManager.camAndMic;
+		}
+		
+		[Bindable]
+		public function get netStreamSignal():Signal
+		{
+			return _mediaManager.netStreamSignal;
+		}
+		
 		public function set microphone(value:Microphone):void
 		{
 			_microphone = value;
 		}
 
-		public function set camera(value:Camera):void
+		public function set camera(value:Camera):void  
 		{
 			_camera = value;
 		}
@@ -171,15 +190,20 @@ package com.projectcocoon.p2p
 			return _groupManager.getGroupspecWithAuthorizations(_group); 	
 		}
 		
-		public function startBrodcast(order:String = null):void
+		public function startBrodcast(order:String = null, broadcasterUID:String = null, toRequesterID:String = null, backNotFrontCamera:Boolean = false):void
 		{
 			//Tracer.log(this, "startBrodcast");
-			_mediaManager.startMedia(new BroadcasterVo(_microphone, _camera), order);
+			_mediaManager.startMedia(new BroadcasterVo(_microphone, _camera, broadcasterUID, toRequesterID), order, backNotFrontCamera);
+		}
+		
+		public function broadcastCurrentMediaInfo(toRequesterID:String):void
+		{
+			_mediaManager.broadcastMediaInfoChange(null, toRequesterID);
 		}
 		
 		public function stopMedia():void
 		{
-			//Tracer.log(this, "startBrodcast");
+			//Tracer.log(this, "stopMedia");
 			_mediaManager.stopMedia();
 		}
 		
@@ -282,7 +306,7 @@ package com.projectcocoon.p2p
 		 * Array filled with ClientVO objects representing all clients
 		 */ 
 		[Bindable(event="clientsChange")]
-		public function get clients():Array
+		public function get clients():ArrayCollection
 		{
 			return _clients;
 		}
@@ -482,9 +506,9 @@ package com.projectcocoon.p2p
 				_nc.removeEventListener(NetStatusEvent.NET_STATUS, onNetStatus);
 				if (_nc.connected)
 					_nc.close();
+					_mediaManager.disconnect();
 				_nc = null;
 			}
-			
 			if (_groupManager)
 			{
 				_groupManager.removeEventListener(GroupEvent.GROUP_CONNECTED, onGroupConnected);
@@ -518,9 +542,9 @@ package com.projectcocoon.p2p
 				_localClient = null;
 			
 			if (_clients)
-				_clients = [];
+				_clients.removeAll();
 			else
-				_clients = [];
+				_clients = new ArrayCollection();
 			dispatchEvent(new Event("clientsChange"));		
 		}
 		
@@ -627,7 +651,7 @@ package com.projectcocoon.p2p
 		{
 			if (event.group == _group)
 			{
-				_clients.push(event.client);
+				_clients.addItem(event.client);
 				dispatchEvent(new Event("clientsConnectedChange"));
 				announceName();
 			}
@@ -650,7 +674,7 @@ package com.projectcocoon.p2p
 		{
 			for(var i:int; i < _clients.length; i++)
 			{
-				if(_clients[i].peerID == client.peerID) _clients.splice(i, 1);
+				if(_clients[i].peerID == client.peerID) _clients.removeItemAt(i);
 			}
 		}
 		

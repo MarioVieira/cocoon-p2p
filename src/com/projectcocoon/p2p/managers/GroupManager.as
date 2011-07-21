@@ -330,8 +330,13 @@ package com.projectcocoon.p2p.managers
 				case NetStatusCode.NETCONNECTION_CONNECT_CLOSED:
 					cleanupAll();
 					break;
-				
 			}
 		}
+		
+		public function disconnect():void
+		{
+			cleanupAll();
+		}
 	}
+	
 }

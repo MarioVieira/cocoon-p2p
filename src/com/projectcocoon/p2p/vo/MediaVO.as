@@ -10,5 +10,8 @@ package com.projectcocoon.p2p.vo
 		public var mediaType	   					   : String;
 		public var broadcasting						   : Boolean;
 		public var order							   : String;
+		public var backNotFrontCamera		 		   : Boolean;
+		public var requesterUID						   : String;
+		public var broadcasterUID					   : String;
 	}
 }
