@@ -100,9 +100,13 @@ package com.projectcocoon.p2p.managers
 			setupNetStream();
 			//Tracer.log(this,"publishMedia - _localClientInfo: "+ _localClientInfo +" type: "+type+"  stream name: "+GetMediaInfo.getStreamName(_mediaInfo)+"  _groupConnection: "+_groupConnection+" _mediaInfo.publisherGroupspecWithAuthorization : "+_mediaInfo.publisherGroupspecWithAuthorization);
 			
+			//Tracer.log(this, "publishMedia - _camAndMic.broadcasterHasTwoCameras: "+_camAndMic.broadcasterHasTwoCameras);
+			
 			_mediaInfo.backNotFrontCamera 					= backNotFrontCamera;
 			_mediaInfo.broadcasterUID						= _camAndMic.broadcasterUID;
 			_mediaInfo.requesterUID							= _camAndMic.requesterUID;
+			_mediaInfo.deviceType							= _camAndMic.deviceType;
+			_mediaInfo.broadcasterHasTwoCameras				= _camAndMic.broadcasterHasTwoCameras;
 			_mediaInfo.publisherStream 						= GetMediaInfo.getStreamName(_mediaInfo);
 			setNetStreamClient();
 			
@@ -170,13 +174,6 @@ package com.projectcocoon.p2p.managers
 			}
 			
 			_mediaMessenger.sendMediaMessageToAll( (mediaInfo) ? mediaInfo : _mediaInfo );
-		}
-		
-		protected function getMicrophoneConfiguration():SoundTransform
-		{
-			var soundTrans:SoundTransform = new SoundTransform();
-			soundTrans.volume = 6;
-			return soundTrans;
 		}
 		
 		protected function onNetStatus(event:NetStatusEvent):void

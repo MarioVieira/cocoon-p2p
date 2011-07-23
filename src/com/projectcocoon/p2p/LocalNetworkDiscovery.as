@@ -190,10 +190,9 @@ package com.projectcocoon.p2p
 			return _groupManager.getGroupspecWithAuthorizations(_group); 	
 		}
 		
-		public function startBrodcast(order:String = null, broadcasterUID:String = null, toRequesterID:String = null, backNotFrontCamera:Boolean = false):void
+		public function startBrodcast(order:String = null, broadcasterUID:String = null, toRequesterID:String = null, backNotFrontCamera:Boolean = false, broadcasterHasTwoCameras:Boolean = false):void
 		{
-			//Tracer.log(this, "startBrodcast");
-			_mediaManager.startMedia(new BroadcasterVo(_microphone, _camera, broadcasterUID, toRequesterID), order, backNotFrontCamera);
+			_mediaManager.startMedia(new BroadcasterVo(_microphone, _camera, broadcasterUID, toRequesterID, broadcasterHasTwoCameras), order, backNotFrontCamera);
 		}
 		
 		public function broadcastCurrentMediaInfo(toRequesterID:String):void
