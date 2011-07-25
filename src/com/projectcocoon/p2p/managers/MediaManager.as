@@ -85,6 +85,8 @@ package com.projectcocoon.p2p.managers
 			{
 				//Tracer.log(this, "stopMedia - _sendStream.close()");
 				_sendStream.close();
+				_sendStream.attachCamera(null);
+				_sendStream.attachAudio(null);
 				_sendStream.removeEventListener(NetStatusEvent.NET_STATUS, onNetStatus);
 			}
 		}
