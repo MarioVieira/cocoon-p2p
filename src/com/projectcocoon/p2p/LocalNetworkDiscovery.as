@@ -41,6 +41,7 @@ package com.projectcocoon.p2p
 	import com.projectcocoon.p2p.managers.MediaManager;
 	import com.projectcocoon.p2p.managers.ObjectManager;
 	import com.projectcocoon.p2p.util.ClassRegistry;
+	import com.projectcocoon.p2p.util.Tracer;
 	import com.projectcocoon.p2p.vo.AccelerationVO;
 	import com.projectcocoon.p2p.vo.BroadcasterVo;
 	import com.projectcocoon.p2p.vo.ClientVO;
@@ -214,6 +215,14 @@ package com.projectcocoon.p2p
 		public function close():void
 		{
 			cleanup();
+		}
+		
+		public function updateCameraSettingsToStream(camera:Camera):void
+		{
+			_mediaManager.camAndMic.camera = camera;
+			
+			//Tracer.log(this, "updateCameraSettingsToStream");
+			//_mediaManager.publishStream();
 		}
 		
 		/**

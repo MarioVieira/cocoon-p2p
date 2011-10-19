@@ -112,9 +112,15 @@ package com.projectcocoon.p2p.managers
 			_mediaInfo.publisherStream 						= GetMediaInfo.getStreamName(_mediaInfo);
 			setNetStreamClient();
 			
-			//THIS IS INCORRECT, NOT POSSIBLE TO STREAM DIRECTTLY, need to use appendBytes of NetStream 
 			attachAudioAndVideo();
+			
 			//Tracer.log(this, "publishMedia - publisherStream: "+_mediaInfo.publisherStream);
+			publishStream();
+		}
+		
+		
+		public function publishStream():void
+		{
 			_sendStream.publish(_mediaInfo.publisherStream);
 		}
 		
